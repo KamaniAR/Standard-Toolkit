@@ -9,6 +9,22 @@
 
 namespace Krypton.Toolkit;
 
+/// <summary>
+/// Implements a Microsoft 365-inspired dark mode color scheme for the Krypton Toolkit.
+/// </summary>
+/// <remarks>
+/// This sealed class provides a comprehensive dark theme color palette based on Microsoft 365's black dark mode appearance.
+/// The color scheme is characterized by:
+/// - Primary background colors using very dark grays (10, 10, 10) and dark grays (41, 41, 41)
+/// - White text for maximum contrast against dark backgrounds
+/// - Subtle gradient transitions using various shades of gray
+/// - Accent colors that maintain visibility while preserving the dark theme aesthetic
+/// 
+/// The scheme is particularly suitable for:
+/// - Applications requiring a dark mode that matches Microsoft 365's black theme
+/// - Interfaces where reduced eye strain in low-light environments is important
+/// - Professional applications needing a modern, sophisticated appearance
+/// </remarks>
 public sealed class PaletteMicrosoft365BlackDarkMode_BaseScheme : KryptonColorSchemeBase
 {
     public override Color TextLabelControl                 { get; set; } = Color.White;
