@@ -853,7 +853,23 @@ public abstract class ButtonSpecManagerBase : GlobalId
         return -1;
     }
 
-    private ViewDockStyle GetDockStyle(ButtonSpec spec) => spec.GetEdge(_redirector) == RelativeEdgeAlign.Near ? ViewDockStyle.Left : ViewDockStyle.Right;
+    private ViewDockStyle GetDockStyle(ButtonSpec spec)
+    {
+        ViewDockStyle dockStyle = spec.GetEdge(_redirector) == RelativeEdgeAlign.Near ? ViewDockStyle.Left : ViewDockStyle.Right;
+        
+        // Apply RTL mirroring if the control has RTL enabled
+        if (Control != null && CommonHelper.GetRightToLeftLayout(Control) && Control.RightToLeft == RightToLeft.Yes)
+        {
+            dockStyle = dockStyle switch
+            {
+                ViewDockStyle.Left => ViewDockStyle.Right,
+                ViewDockStyle.Right => ViewDockStyle.Left,
+                _ => dockStyle
+            };
+        }
+        
+        return dockStyle;
+    }
 
     private VisualOrientation CalculateOrientation(VisualOrientation viewOrientation,
         ButtonOrientation buttonOrientation) => buttonOrientation switch

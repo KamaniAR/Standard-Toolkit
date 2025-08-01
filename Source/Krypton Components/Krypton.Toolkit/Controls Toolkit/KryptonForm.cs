@@ -1009,20 +1009,36 @@ public class KryptonForm : VisualForm,
             : base(palette) =>
             _kryptonForm = kryptonForm;
 
-        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state) => style switch
+        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state)
         {
-            PaletteContentStyle.HeaderForm
-                or PaletteContentStyle.HeaderPrimary
-                or PaletteContentStyle.HeaderDockInactive
-                or PaletteContentStyle.HeaderDockActive
-                or PaletteContentStyle.HeaderSecondary
-                or PaletteContentStyle.HeaderCustom1
-                or PaletteContentStyle.HeaderCustom2
-                or PaletteContentStyle.HeaderCustom3 => _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
-                    ? _kryptonForm._formTitleAlign
-                    : base.GetContentShortTextH(style, state),
-            _ => base.GetContentShortTextH(style, state)
-        };
+            PaletteRelativeAlign align = style switch
+            {
+                PaletteContentStyle.HeaderForm
+                    or PaletteContentStyle.HeaderPrimary
+                    or PaletteContentStyle.HeaderDockInactive
+                    or PaletteContentStyle.HeaderDockActive
+                    or PaletteContentStyle.HeaderSecondary
+                    or PaletteContentStyle.HeaderCustom1
+                    or PaletteContentStyle.HeaderCustom2
+                    or PaletteContentStyle.HeaderCustom3 => _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
+                        ? _kryptonForm._formTitleAlign
+                        : base.GetContentShortTextH(style, state),
+                _ => base.GetContentShortTextH(style, state)
+            };
+
+            // Apply RTL mirroring for text alignment if the form has RTL enabled
+            if (CommonHelper.GetRightToLeftLayout(_kryptonForm) && _kryptonForm.RightToLeft == RightToLeft.Yes)
+            {
+                align = align switch
+                {
+                    PaletteRelativeAlign.Near => PaletteRelativeAlign.Far,
+                    PaletteRelativeAlign.Far => PaletteRelativeAlign.Near,
+                    _ => align
+                };
+            }
+
+            return align;
+        }
     }
 
     /// <summary>
@@ -1157,6 +1173,32 @@ public class KryptonForm : VisualForm,
     protected override void OnUseThemeFormChromeBorderWidthChanged(object? sender, EventArgs e) =>
         // Test if we need to change the custom chrome usage
         UpdateUseThemeFormChromeBorderWidthDecision();
+
+    /// <summary>
+    /// Raises the RightToLeftChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        // Force button recreation and layout update when RTL changes
+        _buttonManager.RecreateButtons();
+        PerformNeedPaint(true);
+        
+        base.OnRightToLeftChanged(e);
+    }
+
+    /// <summary>
+    /// Raises the RightToLeftLayoutChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnRightToLeftLayoutChanged(EventArgs e)
+    {
+        // Force button recreation and layout update when RTL layout changes
+        _buttonManager.RecreateButtons();
+        PerformNeedPaint(true);
+        
+        base.OnRightToLeftLayoutChanged(e);
+    }
 
     /// <inheritdoc />
     protected override void WndProc(ref Message m)
