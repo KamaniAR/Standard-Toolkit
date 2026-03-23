@@ -2760,19 +2760,22 @@ public class KryptonForm : VisualForm,
                 Height - (topBorder + bottomBorder));
 
             // Fix for #3249: clamp region to work area so no border spills onto secondary monitor.
-            // The form bounds can exceed the work area due to DWM; intersect with work area in client coords.
-            const int MONITOR_DEFAULT_TO_NEAREST = 0x00000002;
-            IntPtr mon = PI.MonitorFromWindow(Handle, MONITOR_DEFAULT_TO_NEAREST);
-            if (mon != IntPtr.Zero)
+            // Form bounds can exceed work area due to DWM; use work area in client coords for the region.
+            Screen? screen = Screen.FromHandle(Handle);
+            if (screen != null)
             {
-                PI.MONITORINFO mi = PI.GetMonitorInfo(mon);
-                var workRect = new Rectangle(mi.rcWork.left, mi.rcWork.top,
-                    mi.rcWork.right - mi.rcWork.left, mi.rcWork.bottom - mi.rcWork.top);
-                Rectangle workInClient = RectangleToClient(workRect);
+                Rectangle workArea = screen.WorkingArea;
+                Point workTopLeft = PointToClient(new Point(workArea.Left, workArea.Top));
+                Point workBottomRight = PointToClient(new Point(workArea.Right, workArea.Bottom));
+                var workInClient = new Rectangle(
+                    workTopLeft.X,
+                    workTopLeft.Y,
+                    workBottomRight.X - workTopLeft.X,
+                    workBottomRight.Y - workTopLeft.Y);
                 maximizedRect = Rectangle.Intersect(maximizedRect, workInClient);
                 if (maximizedRect.Width <= 0 || maximizedRect.Height <= 0)
                 {
-                    maximizedRect = workInClient; // fallback
+                    maximizedRect = workInClient;
                 }
             }
 
