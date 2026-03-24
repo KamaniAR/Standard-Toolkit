@@ -2741,45 +2741,26 @@ public class KryptonForm : VisualForm,
                 return;
             }
 
-            // Get the size of each window border
-            var xBorder = PI.GetSystemMetrics(PI.SM_.CXSIZEFRAME) * 2;
-            var yBorder = PI.GetSystemMetrics(PI.SM_.CYSIZEFRAME) * 2;
+            // Get per-side border widths
+            var formBorders = StateCommon?.Border as PaletteFormBorder;
 
-            // Fix for #2457, please do not remove!!!
-            // Get the actual border widths from the form's border palette
-            var formBorder = StateCommon?.Border as PaletteFormBorder;
-            var (leftBorder, topBorder) = formBorder?.BorderWidths(FormBorderStyle) ?? (xBorder / 2, yBorder / 2);
-            var rightBorder = leftBorder; // Use same width for right border
-            var bottomBorder = topBorder; // Use same width for bottom border
+            var (borderX, borderY) =
+                formBorders?.BorderWidths(FormBorderStyle)
+                ?? (
+                    PI.GetSystemMetrics(PI.SM_.CXSIZEFRAME),
+                    PI.GetSystemMetrics(PI.SM_.CYSIZEFRAME)
+                );
 
-            // Calculate the maximized region with proper border handling
+            // Convert to TOTAL border (this is REQUIRED for maximized Region)
+            int totalBorderX = borderX * 2;
+            int totalBorderY = borderY * 2;
+
             var maximizedRect = new Rectangle(
-                leftBorder,
-                topBorder,
-                Width - (leftBorder + rightBorder),
-                Height - (topBorder + bottomBorder));
+                totalBorderX,
+                totalBorderY,
+                Width - (totalBorderX * 2),
+                Height - (totalBorderY * 2));
 
-            // Fix for #3249: clamp region to work area so no border spills onto secondary monitor.
-            // Form bounds can exceed work area due to DWM; use work area in client coords for the region.
-            Screen? screen = Screen.FromHandle(Handle);
-            if (screen != null)
-            {
-                Rectangle workArea = screen.WorkingArea;
-                Point workTopLeft = PointToClient(new Point(workArea.Left, workArea.Top));
-                Point workBottomRight = PointToClient(new Point(workArea.Right, workArea.Bottom));
-                var workInClient = new Rectangle(
-                    workTopLeft.X,
-                    workTopLeft.Y,
-                    workBottomRight.X - workTopLeft.X,
-                    workBottomRight.Y - workTopLeft.Y);
-                maximizedRect = Rectangle.Intersect(maximizedRect, workInClient);
-                if (maximizedRect.Width <= 0 || maximizedRect.Height <= 0)
-                {
-                    maximizedRect = workInClient;
-                }
-            }
-
-            // Use this as the new region
             SuspendPaint();
             _regionWindowState = FormWindowState.Maximized;
             UpdateBorderRegion(new Region(maximizedRect));
