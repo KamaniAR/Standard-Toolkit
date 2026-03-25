@@ -4309,7 +4309,10 @@ public class KryptonCustomPaletteBase : PaletteBase
             default:
                 // Unknown or out-of-range values (e.g. newer enum, bad serialization) — avoid crashing the UI.
                 Debug.Assert(false, $"Unhandled {nameof(PaletteButtonSpecStyle)}: {(int)style}");
-                DebugTools.NotImplemented(style.ToString());
+                if (Debugger.IsAttached)
+                {
+                    throw DebugTools.NotImplemented(style.ToString());
+                }
                 return ButtonSpecs.Generic;
         }
     }
